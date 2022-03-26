@@ -30,6 +30,8 @@ def copy_clipboard():
 def copy_translation():
     translation = ''
     for attempt in range(20):
+        pyautogui.click()
+        pyautogui.hotkey('ctrl', 'a')
         time.sleep(0.5)
         translation = copy_clipboard()
         if not isJapanesse(translation):
@@ -40,13 +42,15 @@ def translate_paragraph(paragraph):
     pyperclip.copy(paragraph)
     pyautogui.moveTo(100, 200)
     pyautogui.click()
+    time.sleep(.01)
     pyautogui.hotkey('ctrl', 'a')
+    time.sleep(.01)
     pyautogui.hotkey('del')
+    time.sleep(.01)
     pyautogui.hotkey('ctrl', 'v')
+    time.sleep(.01)
     (width, height) = pyautogui.size() 
     pyautogui.moveTo(width-100, 200)
-    pyautogui.click()
-    pyautogui.hotkey('ctrl', 'a')
     translation = copy_translation()
     return translation
 
