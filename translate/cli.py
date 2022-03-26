@@ -1,28 +1,11 @@
-from typing import Optional
-from pathlib import Path
 import os
-
+from pathlib import Path
+from typing import Optional
 import typer
-
 from translate import __app_name__, __version__
+import translate.client as client
 
 app = typer.Typer()
-
-
-def paragraphs(fileobj, separator='\n'):
-    if separator[-1:] != '\n': separator += '\n'
-    paragraph = []
-    for line in fileobj:
-        if line == separator:
-            if paragraph:
-                yield ''.join(paragraph)
-                paragraph = []
-        else:
-            paragraph.append(line)
-    if paragraph: yield ''.join(paragraph)
-
-def translate_paragraph(paragraph):
-    return paragraph #TODO
 
 @app.command()
 def translate(
@@ -38,17 +21,16 @@ def translate(
         '--out',
         '-o',
         prompt='Enter the output file path:',
-        exists=False,
     ),
-
+    deepl_executable_path: Path = typer.Option(
+        Path(os.path.join(os.path.expanduser('~'),'AppData/Local/DeepL/DeepL.exe')),
+        '-dl',
+        '--deepl',
+        prompt='Enter the path to DeepL executable:',
+        exists=True,
+    )
 ) -> None:
-    typer.secho(input_path)
-    typer.secho(output_path)
-    with open(input_path, 'r', encoding = 'utf-8') as input_file, open(output_path,'w', encoding = 'utf-8') as output_file :
-        for paragraph in paragraphs(input_file):
-            translation = translate_paragraph(paragraph)
-            output_file.write(translation)
-            output_file.write('\n')
+    client.translate(input_path, output_path, deepl_executable_path)
 
 
 def _version_callback(value: bool) -> None:
