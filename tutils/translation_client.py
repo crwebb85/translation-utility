@@ -5,18 +5,7 @@ import pyautogui
 import pyperclip
 from pywinauto.application import Application
 from tqdm import tqdm
-
-def get_paragraphs(fileobj, separator='\n'):
-    if separator[-1:] != '\n': separator += '\n'
-    paragraph = []
-    for line in fileobj:
-        if line == separator:
-            if paragraph:
-                yield ''.join(paragraph)
-                paragraph = []
-        else:
-            paragraph.append(line)
-    if paragraph: yield ''.join(paragraph)
+from tutils.document_utils import get_paragraphs
 
 def isJapanesse(text):
     pattern = r'(.*)([\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3200-\u32FF]+?)(.*)'

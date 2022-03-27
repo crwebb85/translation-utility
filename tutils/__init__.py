@@ -14,6 +14,4 @@ __version__ = "0.1.0"
 ERRORS = {
     DIR_ERROR: "config directory error",
     FILE_ERROR: "config file error",
-    DB_READ_ERROR: "database read error",
-    DB_WRITE_ERROR: "database write error",
 }

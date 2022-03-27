@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 from typing import Optional
 import typer
-from translate import __app_name__, __version__
-import translate.client as client
+from tutils import __app_name__, __version__
+import tutils.translation_client as client
 
 app = typer.Typer()
 
