@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from translate import __app_name__, __version__, cli
+from tutils import __app_name__, __version__, cli
 
 runner = CliRunner()
 
