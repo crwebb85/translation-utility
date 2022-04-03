@@ -6,6 +6,9 @@ import pyperclip
 from pywinauto.application import Application
 from tqdm import tqdm
 from tutils.document_utils import get_paragraphs
+from joblib import Memory
+
+memory = Memory("cachedir")
 
 def containsJapanesse(text):
     pattern = r'(.*)([\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3200-\u32FF]+?)(.*)'
@@ -18,7 +21,7 @@ def copy_clipboard():
 
 def copy_translation():
     translation = ''
-    for attempt in range(20):
+    for attempt in range(5):
         pyautogui.click()
         pyautogui.hotkey('ctrl', 'a')
         time.sleep(0.5)
@@ -27,6 +30,10 @@ def copy_translation():
             return translation
     return translation 
 
+class TranslationFailedError(Exception):
+    pass
+
+@memory.cache
 def translate_paragraph(paragraph):
     pyperclip.copy(paragraph)
     pyautogui.moveTo(100, 200)
@@ -42,7 +49,7 @@ def translate_paragraph(paragraph):
     pyautogui.moveTo(width-100, 200)
     translation = copy_translation()
     if containsJapanesse(translation):
-        return paragraph #something  went wrong so it is better to return back the original paragraph than whatever garbage got copied
+        raise TranslationFailedError# return paragraph #something  went wrong so it is better to return back the original paragraph than whatever garbage got copied
     return translation
 
 def translate(input_path: Path, output_path: Path, deepl_executable_path: Path):
@@ -51,7 +58,11 @@ def translate(input_path: Path, output_path: Path, deepl_executable_path: Path):
     with open(input_path, 'r', encoding = 'utf-8') as input_file, open(output_path,'w', encoding = 'utf-8') as output_file :
         paragraphs = [paragraph for paragraph in get_paragraphs(input_file)]
         for paragraph in tqdm(paragraphs):
-            translation = translate_paragraph(paragraph)
+            translation = ''
+            try: 
+                translation = translate_paragraph(paragraph)
+            except TranslationFailedError:
+                translation = paragraph
             for line in translation.splitlines():
                 output_file.write(line)
                 output_file.write('\n')
