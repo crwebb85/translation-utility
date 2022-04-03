@@ -5,8 +5,9 @@ import os
 
 import os
 import sys
+from contextlib import ContextDecorator
 
-class RotatingFile(object):
+class RotatingFile(ContextDecorator):
     def __init__(self, directory='', filename='foo', max_files=sys.maxsize,
         max_file_size=50000, encoding='utf-8'):
         self.ii = 1
@@ -15,12 +16,20 @@ class RotatingFile(object):
         self.max_file_size, self.max_files = max_file_size, max_files
         self.finished, self.fh             = False, None
         self.encoding                      = encoding
+        self.pending_text                   = None
         self.open()
 
-    def rotate(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
+    def rotate(self, pending_text_length=0):
         """Rotate the file, if necessary"""
-        if (os.stat(self.filename_template).st_size>self.max_file_size):
-            self.close()
+        if (os.stat(self.filename_template).st_size + pending_text_length >self.max_file_size):
+            self.fh.flush()
+            self.fh.close()
             self.ii += 1
             if (self.ii<=self.max_files):
                 self.open()
@@ -32,11 +41,20 @@ class RotatingFile(object):
         self.fh = open(self.filename_template, 'w', encoding=self.encoding)
 
     def write(self, text=""):
-        self.fh.write(text)
-        self.fh.flush()
-        self.rotate()
+        if self.pending_text is not None:
+            pending_text_length = len(self.pending_text.encode(self.encoding))
+            self.rotate(pending_text_length)
+            self.commit()
+        self.pending_text = text
 
+    def commit(self):
+        if(self.pending_text is not None):
+            self.fh.write(self.pending_text)
+            self.pending_text = None
+        self.fh.flush()
+        
     def close(self):
+        self.commit()
         self.fh.close()
 
     @property
@@ -69,7 +87,7 @@ def get_paragraphs_from_files(file_paths: Iterable[Path]):
 
 def resize_files(all_files: Iterable[Path], output_path, output_file_name="out.txt", max_file_size=1000000):
     output_dir = str(output_path.resolve())
-    out_file_handler = RotatingFile(directory = output_dir, filename=output_file_name, max_file_size=max_file_size)
-    for paragraph in get_paragraphs_from_files(all_files):
-        text = paragraph + '\n'
-        out_file_handler.write(text)
+    with RotatingFile(directory = output_dir, filename=output_file_name, max_file_size=max_file_size) as out_file_handler:
+        for paragraph in get_paragraphs_from_files(all_files):
+            text = paragraph + '\n'
+            out_file_handler.write(text)

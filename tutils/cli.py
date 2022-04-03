@@ -56,9 +56,11 @@ def resize(
         '-n',
     )
 ) -> None:
-    all_files = files + [file for file in path.iterdir()]
+    dir_files =  [file for file in path.iterdir() if file.exists() and not file.is_dir() and file.stem.isnumeric ]
+    dir_files = sorted(dir_files, key=lambda file: int(file.stem))
+    all_files = files + dir_files
     all_files = [f for f in all_files if f.exists() and not f.is_dir()]
-
+    print([os.path.basename(f) for f in all_files])
     resize_files(all_files, output_dir,output_file_name=output_file_name, max_file_size=DataSize(size))
     
 
