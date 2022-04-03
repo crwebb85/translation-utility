@@ -7,9 +7,9 @@ from pywinauto.application import Application
 from tqdm import tqdm
 from tutils.document_utils import get_paragraphs
 
-def isJapanesse(text):
+def containsJapanesse(text):
     pattern = r'(.*)([\u4e00-\u9fff\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF\u3200-\u32FF]+?)(.*)'
-    return bool(re.match(pattern, text))
+    return bool(re.search(pattern, text))
 
 def copy_clipboard():
     pyautogui.hotkey('ctrl', 'c')
@@ -23,7 +23,7 @@ def copy_translation():
         pyautogui.hotkey('ctrl', 'a')
         time.sleep(0.5)
         translation = copy_clipboard()
-        if not isJapanesse(translation):
+        if not containsJapanesse(translation):
             return translation
     return translation 
 
@@ -41,6 +41,8 @@ def translate_paragraph(paragraph):
     (width, height) = pyautogui.size() 
     pyautogui.moveTo(width-100, 200)
     translation = copy_translation()
+    if containsJapanesse(translation):
+        return paragraph #something  went wrong so it is better to return back the original paragraph than whatever garbage got copied
     return translation
 
 def translate(input_path: Path, output_path: Path, deepl_executable_path: Path):
